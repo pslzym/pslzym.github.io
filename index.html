@@ -481,9 +481,7 @@
       
         
           
-            <p>##内存管理</p>
-<p>###内存管理逻辑概念</p>
-<ul>
+            <h2 id="内存管理"><a href="#内存管理" class="headerlink" title="内存管理"></a>内存管理</h2><h3 id="内存管理逻辑概念"><a href="#内存管理逻辑概念" class="headerlink" title="内存管理逻辑概念"></a>内存管理逻辑概念</h3><ul>
 <li>逻辑地址：是在机器语言指令中,来说明操作数和指令的地址;每个逻辑地址包括两部分:段(Segment)和偏移量(Offset)。</li>
 <li>线性地址：也通常成为虚拟地址,在32位系统中,它是32位的无符号整型,最大可以达到4G。</li>
 <li>物理地址：就是真正物理内存上的地址。</li>
@@ -493,8 +491,7 @@
 <p><img src="/uploads/2016/11/3.png" alt=""><br>逻辑地址到线性地址图</p>
 <p>线性地址到物理地址</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">会把线性地址分为：10：10：12</span><br><span class="line">每一个线程的PageDirectory的初始地址都不同，保存在CR3寄存器里面。CR3所指定的就是就是PageDirectory的结构地址。</span><br><span class="line">PageDirectory占4k，一个页。每一项占4个字节。</span><br><span class="line">每一个PageTable表项也占4k，一个页。每一项占4个字节。</span><br><span class="line"></span><br><span class="line">以上两个数据结构每个进程是独立的。都分配在3G~4G的内核内存空间。</span><br></pre></td></tr></table></figure>
-<p>###内存管理相关算法</p>
-<ul>
+<h3 id="内存管理相关算法"><a href="#内存管理相关算法" class="headerlink" title="内存管理相关算法"></a>内存管理相关算法</h3><ul>
 <li>buddy : 解决空闲页的问题</li>
 </ul>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">在实际应用中，经常需要分配一组连续的页框，而频繁地申请和释放不同大小的连续页框，必然导致在已分配页框的内存块中分散了许多小块的 空闲页框。这样，即使这些页框是空闲的，其他需要分配连续页框的应用也很难得到满足。</span><br><span class="line">为了避免出现这种情况，Linux内核中引入了伙伴系统算法(buddy system)。把所有的空闲页框分组为11个 块链表，每个块链表分别包含大小为1，2，4，8，16，32，64，128，256，512和1024个连续页框的页框块。最大可以申请1024个连 续页框，对应4MB大小的连续内存。每个页框块的第一个页框的物理地址是该块大小的整数倍。</span><br></pre></td></tr></table></figure>
@@ -502,8 +499,7 @@
 <li>slab :    用于解决特定大小缓存浪费块空间的问题。</li>
 </ul>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">工作于物理内存页框分配器之上，管理特定大小对象的缓存，进行快速而高效的内存分配。</span><br><span class="line">slab分配器为每种使用的内核对象建立单独的缓冲区。Linux 内核已经采用了伙伴系统管理物理内存页框，因此 slab分配器直接工作于伙伴系 统之上。每种缓冲区由多个 slab 组成，每个 slab就是一组连续的物理内存页框，被划分成了固定数目的对象。根据对象大小的不同，缺省情况下一个 slab 最多可以由 1024个页框构成。出于对齐 等其它方面的要求，slab 中分配给对象的内存可能大于用户要求的对象实际大小，这会造成一定的 内存浪费。</span><br></pre></td></tr></table></figure>
-<p>###内存分配相关函数</p>
-<ul>
+<h3 id="内存分配相关函数"><a href="#内存分配相关函数" class="headerlink" title="内存分配相关函数"></a>内存分配相关函数</h3><ul>
 <li>__get_free_pages</li>
 </ul>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">　　unsigned long __get_free_pages(gfp_t gfp_mask, unsigned int order)</span><br><span class="line">　　__get_free_pages函数是最原始的内存分配方式，直接从伙伴系统中获取原始页框，返回值为第一个页框的起始地址</span><br></pre></td></tr></table></figure>
