@@ -280,6 +280,191 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/04/27/golang学习/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ddup">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/uploads/avatar.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ddup">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/04/27/golang学习/" itemprop="url">
+                  golang学习
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-04-27T13:16:53+08:00">
+                2018-04-27
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="数组、切片、映射"><a href="#数组、切片、映射" class="headerlink" title="数组、切片、映射"></a>数组、切片、映射</h2><h3 id="数组"><a href="#数组" class="headerlink" title="数组"></a>数组</h3><h4 id="内部实现"><a href="#内部实现" class="headerlink" title="内部实现"></a>内部实现</h4><p>　　    在Go语言里，数组是一个长度固定的数据类型，用于存储一段具有相同的类型的元素的<strong>连续块</strong>。数组存储的类型可以是内置类型也可以是某种结构类型。</p>
+<h4 id="声明和初始化"><a href="#声明和初始化" class="headerlink" title="声明和初始化"></a>声明和初始化</h4><p>声明数组时，需要指定内部的数据类型，以及需要存储的元素的数量。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">1) var array [5]int</span><br><span class="line">2) array := [5]int&#123;10,20,30,40,50&#125;</span><br><span class="line">3) array := [...]int&#123;10,20,30,40,50&#125; //自动计算长度。</span><br><span class="line">4）array := [5]int&#123;1:10,2:50&#125;</span><br></pre></td></tr></table></figure></p>
+<h4 id="数组相互赋值，在函数间传递数组"><a href="#数组相互赋值，在函数间传递数组" class="headerlink" title="数组相互赋值，在函数间传递数组"></a>数组相互赋值，在函数间传递数组</h4><p>数组相互赋值<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">var array1 [5]string</span><br><span class="line">array2 := [5]string&#123;&quot;RED&quot;, &quot;Blue&quot;, &quot;Green&quot;&#125;</span><br><span class="line">array1 = array2</span><br><span class="line">两个赋完值之后，数组里面的值完全一样。完全拷贝了一份出来。</span><br></pre></td></tr></table></figure></p>
+<p>在函数间传递数组<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">根据内存和性能来看，在函数间传递数组是一个开销很大的操作。在函数间传递变量时，总是以值的方式传递。</span><br></pre></td></tr></table></figure></p>
+<h3 id="切片"><a href="#切片" class="headerlink" title="切片"></a>切片</h3><h4 id="切片的内部实现"><a href="#切片的内部实现" class="headerlink" title="切片的内部实现"></a>切片的内部实现</h4><p>切片是一个很小的对象，对底层数据进行了抽象，并提供相关的操作函数。切片有三个字段的数据结构，分别为指向低层数组的指针、切片访问的低层元素的个数、切片准许增长到的元素的个数。</p>
+<p><img src="/uploads/2017/5/切片.JPG" alt=""></p>
+<h4 id="创建和初始化"><a href="#创建和初始化" class="headerlink" title="创建和初始化"></a>创建和初始化</h4><p>1.make 和切片字面量<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">slice := make([]string, 5) //长度和容量都等于5</span><br><span class="line">slice1 := make([]string, 5, 6) //长度等于5，容量等于6</span><br><span class="line">slice2 := []int&#123;10, 20, 30&#125; //长度和容量都等于3</span><br></pre></td></tr></table></figure></p>
+<p>2.nil和空切片<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">nil切片</span><br><span class="line">var slice []int</span><br><span class="line">空切片</span><br><span class="line">slice := make([]int,0)</span><br><span class="line">slice := []int&#123;&#125;</span><br><span class="line"></span><br><span class="line">切片只能和nil比较</span><br><span class="line">nil切片和nil值相等</span><br><span class="line">空切片和nil值不等</span><br></pre></td></tr></table></figure></p>
+<h4 id="使用切片"><a href="#使用切片" class="headerlink" title="使用切片"></a>使用切片</h4><p>1.赋值<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">slice := []int&#123;10, 20, 30, 40， 50&#125;</span><br><span class="line">newSlice := slice[1:3]</span><br><span class="line">两个切片的低层数据是共用的。此时newSlice的长度为2，容量为4。</span><br><span class="line">当newSlice的容量没有超过4时，如果修改一个会影响另外一个的值。</span><br><span class="line">当newSlice的容量超过4时，会发生一次低层数据的拷贝。此后的修改两个切片的数据会互不干扰。</span><br><span class="line"></span><br><span class="line">newSlice := slice[1:3:3]</span><br><span class="line">此时的效果和上面一样，只不过容量会变为2。超过容量之后也会发生一次拷贝。之后的行为和上述一样。</span><br></pre></td></tr></table></figure></p>
+<h3 id="映射"><a href="#映射" class="headerlink" title="映射"></a>映射</h3><h4 id="内部的实现"><a href="#内部的实现" class="headerlink" title="内部的实现"></a>内部的实现</h4><p>映射是一种数据结构，用于存储一系列无序的键值对。映射里面基于键来存储值。</p>
+<p><img src="/uploads/2017/5/映射.JPG" alt=""></p>
+<h4 id="创建和初始化-1"><a href="#创建和初始化-1" class="headerlink" title="创建和初始化"></a>创建和初始化</h4><p>创建<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">dict := make(map[string]int)</span><br><span class="line">dict := map[string]string&#123;&quot;RED&quot; : &quot;#daxx&quot;, &quot;Orange&quot; : &quot;#adxx&quot;&#125;</span><br></pre></td></tr></table></figure></p>
+<h4 id="使用映射"><a href="#使用映射" class="headerlink" title="使用映射"></a>使用映射</h4><ul>
+<li>为映射赋值</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">colors := map[string]string&#123;&#125;</span><br><span class="line">colors[&quot;Red&quot;] = &quot;#daxxx&quot;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>对nil映射赋值时的语言运行时错误</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">var colors map[string]string</span><br><span class="line">colors[&quot;Red&quot;] = &quot;#daxxx&quot;    //报错</span><br></pre></td></tr></table></figure>
+<ul>
+<li>从映射中取值</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">a.</span><br><span class="line"> 	value, exists := colors[&quot;Blue&quot;]</span><br><span class="line"> 	if exists &#123;</span><br><span class="line"> 		fmt.Println(value)</span><br><span class="line"> 	&#125;</span><br><span class="line">b.</span><br><span class="line">	value := colors[&quot;Blue&quot;]</span><br><span class="line">	if value != &quot;&quot; &#123;</span><br><span class="line">		fmt.Println(value)</span><br><span class="line">	&#125;</span><br><span class="line">	即便是这个键不存在也总会返回一个值，在这种情况下，返回的是改值对应的类型的零值。</span><br><span class="line">	</span><br><span class="line">	for value, key := range colors &#123;</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>删除映射里面的值</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">delete(colors, &quot;psl&quot;) //删除键为psl的键值对。</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在函数间传递<br>  在函数间传递映射并不会制造出该映射的一个副本。实际上，当传递映射给一个函数，并对其作出修改时，所有对这个函数引用都会察觉到这个修改。<br>  两个映射相互赋值也会和上面同样的效果</p>
+  <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">a := map[string]int&#123;&quot;1&quot;: 1, &quot;2&quot;: 2&#125;</span><br><span class="line">b := a</span><br><span class="line">b[&quot;1&quot;] = 2</span><br><span class="line">fmt.Println(a)</span><br><span class="line">fmt.Println(b) 打印出来一样</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h2 id="Go语言类型系统"><a href="#Go语言类型系统" class="headerlink" title="Go语言类型系统"></a>Go语言类型系统</h2><p>父类型不能接受子类型的值。</p>
+<h3 id="用户定义的类型"><a href="#用户定义的类型" class="headerlink" title="用户定义的类型"></a>用户定义的类型</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">type user struct &#123;</span><br><span class="line">	name string, </span><br><span class="line">	email string,</span><br><span class="line">	ext int,</span><br><span class="line">	privileged bool</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var bill user</span><br><span class="line">当声明变量时，这个变量对应的值总是被初始化。这个值要么用指定的值初始化，要么用零值做初始化。</span><br></pre></td></tr></table></figure>
+<h3 id="方法"><a href="#方法" class="headerlink" title="方法"></a>方法</h3><p>方法能给用户定义的类型添加新的行为。方法实际也是函数，只是在关键字func和方法名之间增加了一个参数。</p>
+<p><em>Go语言里有两种类型的接收者：值接收者和指针接收者。</em></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">1.使用值作为接收者进行调用，方法会接收到值的一个副本。</span><br><span class="line">2.使用指针变量来调用方法，方法会共享调用方法时接收者所指向的值。</span><br><span class="line"></span><br><span class="line">Go语言在调用方法时，会调整接收者。使其满足函数的调用。</span><br><span class="line">bill.changeEmail(). -&gt;  (&amp;bill).changeEmail()</span><br><span class="line">bill.changeEmail().  -&gt; (*bill).changeEmail()</span><br></pre></td></tr></table></figure>
+<h3 id="内置类型，引用类型"><a href="#内置类型，引用类型" class="headerlink" title="内置类型，引用类型"></a>内置类型，引用类型</h3><p>Go语言里的引用类型有如下几个：切片，映射，通道，接口，函数类型。</p>
+<h3 id="接口"><a href="#接口" class="headerlink" title="接口"></a>接口</h3><p>多态是指代码可以根据类型的具体实现采取不同行为的能力。</p>
+<h4 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h4><p><em>接口就是用来定义行为的类型。这些被定义的行为不由接口直接实现，而是通过方法由用户定义的类型实现。如果用户定义的类型实现了某个接口类型声明的一组方法，那么这个用户定义的类型的值就可以赋给这个接口类型的值。这个赋值会把用户定义的类型的值存入接口类型的值。<br>接口的值是一个两个字长度的数据结构，第一个字包含一个指向内部表的指针。这个内部的表叫做iTable,包含了所存储的值的类型信息（值的类型信息和这个值关联的一组方法）。第二个字是一个指向所存储值的指针。将类型信息和指针组合在一起，就将这两个值组成了一种特殊的关系。</em></p>
+<p><img src="/uploads/2017/5/接口.JPG" alt=""></p>
+<p><strong>重点：<br>方法集定义了一组关联到给定类型的值或者指针的方法。定义方法时使用的接收者的类型决定了这个方法是关联到值，还是关联到指针，还是两者都关联。</strong><br>从接收者的角度来看方法集</p>
+<table>
+<thead>
+<tr>
+<th>Methods Receivers</th>
+<th>Values</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>(t T)</td>
+<td>T and *T</td>
+</tr>
+<tr>
+<td>(t *T)</td>
+<td>*T</td>
+</tr>
+</tbody>
+</table>
+<h2 id="并发与并行"><a href="#并发与并行" class="headerlink" title="并发与并行"></a>并发与并行</h2><p>并行的关键是同时做很多事情。<br>并发是指同时管理很多事情，这些事情可能只做了一半就被暂停去做别的事情了。</p>
+<h3 id="goroutine"><a href="#goroutine" class="headerlink" title="goroutine"></a>goroutine</h3><p><img src="/uploads/2017/5/goruntine.JPG" alt=""></p>
+<p>如果希望让goroutine并行，必须使用多余一个的逻辑处理器。当有多个逻辑处理器时，调度器会将goroutine平等分配到每个逻辑处理器上。这会让goroutine在不同的线程上运行。不过要想实现并行的效果，用户需要让自己的程序运行在有多个物理处理器的机器上。</p>
+<p><img src="/uploads/2017/5/并发和并行.JPG" alt=""></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">runtime.GOMAXPROCS(1)//分配一个逻辑处理器给调度器使用</span><br><span class="line">runtime.GOMAXPROCS(runtime.NumCPU()) //给每个可用的核心分配一个逻辑处理器</span><br></pre></td></tr></table></figure>
+<h3 id="竞争状态"><a href="#竞争状态" class="headerlink" title="竞争状态"></a>竞争状态</h3><p>如果两个或者多个goruntine在没有互相同步的情况下，访问某个共享的资源，并试图同时读和写这个资源，就处于相互竞争的状态，这种情况被称作竞争状态。</p>
+<h5 id="锁住共享资源"><a href="#锁住共享资源" class="headerlink" title="锁住共享资源"></a>锁住共享资源</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">1.原子操作</span><br><span class="line"> atomic</span><br><span class="line">2.互斥锁</span><br><span class="line"> mutex</span><br><span class="line"> </span><br><span class="line"> runtine.Gosched()// 当前goruntine从线程退出，并放回到队列。</span><br></pre></td></tr></table></figure>
+<h3 id="通道"><a href="#通道" class="headerlink" title="通道"></a>通道</h3><p>1.创建<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">unbufferd := make(chan int)</span><br><span class="line">bufferd := make(chan int, 10)</span><br></pre></td></tr></table></figure></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/04/21/读书之约/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1514,159 +1699,6 @@ ReducerAggregator&lt;T&gt;
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/10/07/stormdan-ci-ji-shu-shi-li/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="ddup">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/uploads/avatar.jpeg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Ddup">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/10/07/stormdan-ci-ji-shu-shi-li/" itemprop="url">
-                  Storm单词计数示例
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-10-07T00:30:43+08:00">
-                2016-10-07
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>##Storm单词计数示例</p>
-<ul>
-<li>top代码</li>
-<li>spout代码</li>
-<li>bolt代码</li>
-<li>遇到的bug</li>
-</ul>
-<p>###top代码</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><span class="line">package org.pslland;</span><br><span class="line"></span><br><span class="line">import org.apache.storm.Config;</span><br><span class="line">import org.apache.storm.LocalCluster;</span><br><span class="line">import org.apache.storm.StormSubmitter;</span><br><span class="line">import org.apache.storm.generated.AlreadyAliveException;</span><br><span class="line">import org.apache.storm.generated.AuthorizationException;</span><br><span class="line">import org.apache.storm.generated.InvalidTopologyException;</span><br><span class="line">import org.apache.storm.topology.TopologyBuilder;</span><br><span class="line">import org.apache.storm.tuple.Fields;</span><br><span class="line">import org.apache.storm.utils.Utils;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by psl on 10/6/16.</span><br><span class="line"> */</span><br><span class="line">public class WordCountTopology &#123;</span><br><span class="line"></span><br><span class="line">    private static final String SENTENCE_SPOUT_ID = &quot;sentence-spout&quot;;</span><br><span class="line">    private static final String SPLIT_BOLT_ID = &quot;split-bolt&quot;;</span><br><span class="line">    private static final String COUNT_BOLT_ID = &quot;count-bolt&quot;;</span><br><span class="line">    private static final String REPORT_BOLT_ID = &quot;report-bolt&quot;;</span><br><span class="line">    private static final String TOPOLOGY_NAME = &quot;word-count-topology&quot;;</span><br><span class="line"></span><br><span class="line">    public static void main(String [] args) throws InvalidTopologyException, AuthorizationException, AlreadyAliveException &#123;</span><br><span class="line">        SentenceSpout sentenceSpout = new SentenceSpout();</span><br><span class="line">        SplitSentenceBolt splitSentenceBolt = new SplitSentenceBolt();</span><br><span class="line">        WordCountBolt wordCountBolt = new WordCountBolt();</span><br><span class="line">        ReportBolt reportBolt = new ReportBolt();</span><br><span class="line"></span><br><span class="line">        TopologyBuilder builder = new TopologyBuilder();</span><br><span class="line"></span><br><span class="line">        builder.setSpout(SENTENCE_SPOUT_ID, sentenceSpout);//, 2);</span><br><span class="line"></span><br><span class="line">        builder.setBolt(SPLIT_BOLT_ID, splitSentenceBolt, 2).setNumTasks(4).shuffleGrouping(SENTENCE_SPOUT_ID);</span><br><span class="line">        //builder.setBolt(SPLIT_BOLT_ID, splitSentenceBolt).shuffleGrouping(SENTENCE_SPOUT_ID);</span><br><span class="line"></span><br><span class="line">        builder.setBolt(COUNT_BOLT_ID, wordCountBolt, 6).fieldsGrouping(SPLIT_BOLT_ID, new Fields(&quot;word&quot;));</span><br><span class="line">        //builder.setBolt(COUNT_BOLT_ID, wordCountBolt).fieldsGrouping(SPLIT_BOLT_ID, new Fields(&quot;word&quot;));</span><br><span class="line"></span><br><span class="line">        builder.setBolt(REPORT_BOLT_ID, reportBolt).globalGrouping(COUNT_BOLT_ID);</span><br><span class="line"></span><br><span class="line">        Config config = new Config();</span><br><span class="line">        //config.setNumWorkers(2);</span><br><span class="line"></span><br><span class="line">        if (args.length == 0) &#123;</span><br><span class="line"></span><br><span class="line">            LocalCluster cluster = new LocalCluster();</span><br><span class="line"></span><br><span class="line">            cluster.submitTopology(TOPOLOGY_NAME, config, builder.createTopology());</span><br><span class="line">            //StormSubmitter.submitTopology(TOPOLOGY_NAME, config, builder.createTopology());</span><br><span class="line"></span><br><span class="line">            Utils.sleep(20000);</span><br><span class="line"></span><br><span class="line">            cluster.killTopology(TOPOLOGY_NAME);</span><br><span class="line"></span><br><span class="line">            cluster.shutdown();</span><br><span class="line">        &#125;else &#123;</span><br><span class="line">            StormSubmitter.submitTopology(args[0], config, builder.createTopology());</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>###spout代码</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line">package org.pslland;</span><br><span class="line"></span><br><span class="line">import org.apache.storm.spout.SpoutOutputCollector;</span><br><span class="line">import org.apache.storm.task.TopologyContext;</span><br><span class="line">import org.apache.storm.topology.IRichBolt;</span><br><span class="line">import org.apache.storm.topology.IRichSpout;</span><br><span class="line">import org.apache.storm.topology.OutputFieldsDeclarer;</span><br><span class="line">import org.apache.storm.topology.base.BaseRichSpout;</span><br><span class="line">import org.apache.storm.tuple.Fields;</span><br><span class="line">import org.apache.storm.tuple.Values;</span><br><span class="line">import org.apache.storm.utils.Utils;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">import java.util.Map;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by psl on 10/5/16.</span><br><span class="line"> */</span><br><span class="line">public class SentenceSpout extends BaseRichSpout &#123;</span><br><span class="line"></span><br><span class="line">    private SpoutOutputCollector spoutOutputCollector = null;</span><br><span class="line"></span><br><span class="line">    private String [] sentence = &#123;</span><br><span class="line">        &quot;my dog has fleas&quot;,</span><br><span class="line">            &quot;I like cold beverages&quot;,</span><br><span class="line">            &quot;the dog ate my homework&quot;,</span><br><span class="line">            &quot;don&apos;t have a cow man&quot;,</span><br><span class="line">            &quot;i don&apos;t think i like fleas&quot;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    private  int index = 0;</span><br><span class="line"></span><br><span class="line">    public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) &#123;</span><br><span class="line">        outputFieldsDeclarer.declare(new Fields(&quot;sentence&quot;));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector spoutOutputCollector) &#123;</span><br><span class="line">        this.spoutOutputCollector = spoutOutputCollector;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void nextTuple() &#123;</span><br><span class="line">        this.spoutOutputCollector.emit(new Values(sentence[index]));</span><br><span class="line"></span><br><span class="line">        index++;</span><br><span class="line">        if(index &gt;= sentence.length)&#123;</span><br><span class="line">            index = 0;</span><br><span class="line">        &#125;</span><br><span class="line">        Utils.sleep(1000);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>###bolt代码<br>splitSentenceBolt.java</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">package org.pslland;</span><br><span class="line"></span><br><span class="line">import org.apache.storm.task.OutputCollector;</span><br><span class="line">import org.apache.storm.task.TopologyContext;</span><br><span class="line">import org.apache.storm.topology.OutputFieldsDeclarer;</span><br><span class="line">import org.apache.storm.topology.base.BaseRichBolt;</span><br><span class="line">import org.apache.storm.tuple.Fields;</span><br><span class="line">import org.apache.storm.tuple.Tuple;</span><br><span class="line">import org.apache.storm.tuple.Values;</span><br><span class="line"></span><br><span class="line">import java.util.Map;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by psl on 10/5/16.</span><br><span class="line"> */</span><br><span class="line">public class SplitSentenceBolt extends BaseRichBolt &#123;</span><br><span class="line"></span><br><span class="line">    private OutputCollector outputCollector = null;</span><br><span class="line"></span><br><span class="line">    public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) &#123;</span><br><span class="line">        this.outputCollector = outputCollector;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void execute(Tuple tuple) &#123;</span><br><span class="line">        String sentence = tuple.getStringByField(&quot;sentence&quot;);</span><br><span class="line">        String [] words = sentence.split(&quot; &quot;);</span><br><span class="line"></span><br><span class="line">        System.out.println(&quot;splitSentence : &quot; + sentence);</span><br><span class="line"></span><br><span class="line">        for (String word : words)&#123;</span><br><span class="line">            this.outputCollector.emit(new Values(word));</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) &#123;</span><br><span class="line">        outputFieldsDeclarer.declare(new Fields(&quot;word&quot;));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>WordCountBolt.java</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">package org.pslland;</span><br><span class="line"></span><br><span class="line">import org.apache.storm.task.OutputCollector;</span><br><span class="line">import org.apache.storm.task.TopologyContext;</span><br><span class="line">import org.apache.storm.topology.OutputFieldsDeclarer;</span><br><span class="line">import org.apache.storm.topology.base.BaseRichBolt;</span><br><span class="line">import org.apache.storm.tuple.Fields;</span><br><span class="line">import org.apache.storm.tuple.Tuple;</span><br><span class="line">import org.apache.storm.tuple.Values;</span><br><span class="line"></span><br><span class="line">import java.util.HashMap;</span><br><span class="line">import java.util.Map;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by psl on 10/5/16.</span><br><span class="line"> */</span><br><span class="line">public class WordCountBolt extends BaseRichBolt &#123;</span><br><span class="line"></span><br><span class="line">    private OutputCollector outputCollector = null;</span><br><span class="line">    private HashMap&lt;String, Long&gt; counts = null;</span><br><span class="line"></span><br><span class="line">    public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) &#123;</span><br><span class="line">        this.outputCollector = outputCollector;</span><br><span class="line">        this.counts = new HashMap&lt;String, Long&gt;();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void execute(Tuple tuple) &#123;</span><br><span class="line">        String word = tuple.getStringByField(&quot;word&quot;);</span><br><span class="line">        Long count = this.counts.get(word);</span><br><span class="line">        if(count == null)&#123;</span><br><span class="line">            count = 0L;</span><br><span class="line">        &#125;</span><br><span class="line">        count++;</span><br><span class="line">        this.counts.put(word, count);</span><br><span class="line">        this.outputCollector.emit(new Values(word, count));</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) &#123;</span><br><span class="line">        outputFieldsDeclarer.declare(new Fields(&quot;word&quot;, &quot;count&quot;));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>ReportBolt.java</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line">package org.pslland;</span><br><span class="line"></span><br><span class="line">import org.apache.storm.task.OutputCollector;</span><br><span class="line">import org.apache.storm.task.TopologyContext;</span><br><span class="line">import org.apache.storm.topology.OutputFieldsDeclarer;</span><br><span class="line">import org.apache.storm.topology.base.BaseRichBolt;</span><br><span class="line">import org.apache.storm.tuple.Tuple;</span><br><span class="line"></span><br><span class="line">import java.util.*;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by psl on 10/5/16.</span><br><span class="line"> */</span><br><span class="line">public class ReportBolt extends BaseRichBolt &#123;</span><br><span class="line"></span><br><span class="line">    private HashMap&lt;String, Long&gt; counts = null;</span><br><span class="line"></span><br><span class="line">    public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) &#123;</span><br><span class="line">        this.counts = new HashMap&lt;String, Long&gt;();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void execute(Tuple tuple) &#123;</span><br><span class="line">        String word = tuple.getStringByField(&quot;word&quot;);</span><br><span class="line">        Long count = tuple.getLongByField(&quot;count&quot;);</span><br><span class="line"></span><br><span class="line">        this.counts.put(word, count);</span><br><span class="line"></span><br><span class="line">        //this.cleanup();</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) &#123;</span><br><span class="line">        //last bolt</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void cleanup()&#123;</span><br><span class="line">        System.out.println(&quot;----------- FINAL COUNTS -----------&quot;);</span><br><span class="line">        List&lt;String&gt; keys = new ArrayList&lt;String&gt;();</span><br><span class="line">        keys.addAll(this.counts.keySet());</span><br><span class="line"></span><br><span class="line">        Collections.sort(keys);</span><br><span class="line"></span><br><span class="line">        for (String key : keys)&#123;</span><br><span class="line">            System.out.println(key + &quot; : &quot; + this.counts.get(key));</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        System.out.println(&quot;-----------------------------------&quot;);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>###遇到的bug<br>我的代码是通过IDEA打包的。相关maven配置：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span><br><span class="line">&lt;project xmlns=&quot;http://maven.apache.org/POM/4.0.0&quot;</span><br><span class="line">         xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span><br><span class="line">         xsi:schemaLocation=&quot;http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd&quot;&gt;</span><br><span class="line">    &lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;</span><br></pre></td></tr></table></figure>
-<pre><code>&lt;groupId&gt;org.pslland&lt;/groupId&gt;
-&lt;artifactId&gt;stormWC&lt;/artifactId&gt;
-&lt;version&gt;1.0-SNAPSHOT&lt;/version&gt;
-
-&lt;dependencies&gt;
-    &lt;dependency&gt;
-        &lt;groupId&gt;org.apache.storm&lt;/groupId&gt;
-        &lt;artifactId&gt;storm-core&lt;/artifactId&gt;
-        &lt;version&gt;1.0.2&lt;/version&gt;
-        &lt;!--&lt;scope&gt;provided&lt;/scope&gt;--&gt;
-    &lt;/dependency&gt;
-&lt;/dependencies&gt;
-</code></pre><p></p>
-<p></p>
-<p>本地调试的时候去掉<scope>provided</scope>标签。</p>
-<p>在集群提交测试的时候如果编译没有加上provided 标签会产生如下错误：<br>Caused by: java.io.IOException: Found multiple defaults.yaml resources. </p>
-<p>集群提交命令：<br>./storm  jar 包名  类名  参数</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1716,7 +1748,7 @@ ReducerAggregator&lt;T&gt;
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">32</span>
+                <span class="site-state-item-count">33</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
