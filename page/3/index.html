@@ -280,6 +280,316 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/09/24/stormji-chu-yuan-li/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ddup">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/uploads/avatar.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ddup">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/09/24/stormji-chu-yuan-li/" itemprop="url">
+                  Storm基础原理
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-09-24T18:51:54+08:00">
+                2016-09-24
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>##Storm原理图</p>
+<ul>
+<li>主架构</li>
+<li>主流程</li>
+</ul>
+<p>###主架构</p>
+<pre><code>          主节点     工作节点          作业
+Storm     Nimbus     supervisor      topologies,死循环
+hadoop    Jobtracker  Tasktracker     MapReduce Job，执行完自动结束
+</code></pre><p><img src="/uploads/2016/09/strom1.png" alt=""><br>主要架构图</p>
+<p>Nimbus 和supervisor之间所有的协调工作时通过一个zookeeper集群。<br>Nimbus 进程和supervisor进程是无法直接连接和无状态的；所有的状态维持在zookeeper中或保持在本地磁盘上</p>
+<p>Nimbus 负责在集群分发代码，top只能在Nimbus机器上面提交，将任务分配给其他机器。<br>Supervisor监听分配给它的节点，根据Nimbus的委派在必要时启动和关闭工作进程。每个工作进程执行top的一个子集。一个运行中的top由很多运行在很多机器上的工作进程组成。<br>在Storm中有对于流stream的抽象。流是一个不间断的无界的连续的tuple，注意Storm在建模事件流时，把流中德事件抽象为tuple即元组</p>
+<p><img src="/uploads/2016/09/strom2.png" alt=""><br>工作图</p>
+<p>###主流程<br>Storm认为每个stream都有一个源，也就是原始元组的源头，叫做Spout（管口）<br>处理stream内的tuple，抽象为Bolt，bolt可以消费任意数量的输入流，只要将流方向导向该bolt，同时它也可以发送新的流给其他bolt使用，这样一来，只要打开特定的spout再将spout中流出的tuple导向特定的bolt，又bolt对导入的流做处理后再导向其他bolt或者目的地。</p>
+<p>可以认为spout就是水龙头，并且每个水龙头里流出的水是不同的，我们想拿到哪种水就拧开哪个水龙头，然后使用管道将水龙头的水导向到一个水处理器（bolt），水处理器处理后再使用管道导向另一个处理器或者存入容器中。</p>
+<p><img src="/uploads/2016/09/strom3.png" alt=""><br>spout和bolt工作图</p>
+<p>这是一张有向无环图，Storm将这个图抽象为Topology(拓扑)，Topo就是storm的Job抽象概念，一个拓扑就是一个流转换图</p>
+<p>图中每个节点是一个spout或者bolt，每个spout或者bolt发送元组到下一级组件，广播方式。</p>
+<p>而Spout到单个Bolt有6种grouping方式，后续细讲。</p>
+<p>Storm将流中元素抽象为tuple，一个tuple就是一个值列表value list，list中的每个value都有一个name，并且该value可以是任意可序列化的类型。拓扑的每个节点都要说明它所发射出的元组的字段的name，其他节点只需要订阅该name就可以接收处理。</p>
+<p><img src="/uploads/2016/09/strom4.png" alt=""></p>
+<p>Streams：消息流<br>消息流是一个没有边界的tuple序列，而这些tuples会被以一种分布式的方式并行创建和处理。 每个tuple可以包含多列，字段类型可以是： integer, long, short, byte, string, double, float, boolean和byte array。 你还可以自定义类型 — 只要你实现对应的序列化器。</p>
+<p>Spouts：消息源<br>Spouts是topology消息生产者。Spout从一个外部源(消息队列)读取数据向topology发出tuple。 消息源Spouts可以是可靠的也可以是不可靠的。一个可靠的消息源可以重新发射一个处理失败的tuple， 一个不可靠的消息源Spouts不会。</p>
+<p>Spout类的方法nextTuple不断发射tuple到topology，storm在检测到一个tuple被整个topology成功处理的时候调用ack, 否则调用fail。<br>storm只对可靠的spout调用ack和fail。</p>
+<p>Bolts：消息处理者<br>消息处理逻辑被封装在bolts里面，Bolts可以做很多事情： 过滤， 聚合， 查询数据库等。<br>Bolts可以简单的做消息流的传递。复杂的消息流处理往往需要很多步骤， 从而也就需要经过很多Bolts。第一级Bolt的输出可以作为下一级Bolt的输入。而Spout不能有一级。</p>
+<p>Bolts的主要方法是execute（死循环）连续处理传入的tuple，成功处理完每一个tuple调用OutputCollector的ack方法，以通知storm这个tuple被处理完成了。当处理失败时，可以调fail方法通知Spout端可以重新发送该tuple。</p>
+<p>流程是： Bolts处理一个输入tuple, 然后调用ack通知storm自己已经处理过这个tuple了。storm提供了一个IBasicBolt会自动调用ack。<br>Bolts使用OutputCollector来发射tuple到下一级Blot。
+</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/09/24/hbaseji-qun-da-jian/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ddup">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/uploads/avatar.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ddup">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/09/24/hbaseji-qun-da-jian/" itemprop="url">
+                  Hbase集群搭建
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-09-24T16:40:24+08:00">
+                2016-09-24
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>##Hbase环境搭建</p>
+<ul>
+<li>搭建zookeeper集群和HDFS集群</li>
+<li>安装Hbase软件</li>
+<li>启动集群</li>
+<li>shell客户端连接</li>
+</ul>
+<p>###搭建zookeeper集群和HDFS集群<br>zookeeper 对于Hbase集群是必不可少的。zookeeper为hadoop集群提供协同服务。<br>HDFS为Hbase提供体层的存储服务<br>zookeeper和HDFS搭建参考相关博文</p>
+<p>###安装Hbase软件<br>目前Hbase最新稳定版本为1.2.3。在官网相关网页下载相关软件包。</p>
+<p>1.将软件包解压到相关路径</p>
+<ol>
+<li>进入配置文件目录，修改相关配置文件</li>
+</ol>
+<pre><code>hbase-site.xml
+&lt;configuration&gt;
+&lt;property&gt;
+            &lt;name&gt;hbase.rootdir&lt;/name&gt;
+            &lt;value&gt;hdfs://Master:9000/hbase&lt;/value&gt;
+    &lt;/property&gt;
+    &lt;!-- 指定hbase是分布式的 --&gt;
+    &lt;property&gt;
+            &lt;name&gt;hbase.cluster.distributed&lt;/name&gt;
+            &lt;value&gt;true&lt;/value&gt;
+    &lt;/property&gt;
+    &lt;!-- 指定zk的地址，多个用“,”分割 --&gt;
+    &lt;property&gt;
+            &lt;name&gt;hbase.zookeeper.quorum&lt;/name&gt;
+            &lt;value&gt;Master:2181,Slave1:2181,Slave2:2181&lt;/value&gt;
+    &lt;/property&gt;
+</code></pre><p></p>
+<pre><code>hbase-env.sh
+export JAVA_HOME=/usr/lib/jvm/java-7-openjdk-amd64
+export HBASE_OPTS=&quot;-XX:+UseConcMarkSweepGC&quot;
+export HBASE_MASTER_OPTS=&quot;$HBASE_MASTER_OPTS -XX:PermSize=128m -XX:MaxPermSize=128m&quot;
+export HBASE_REGIONSERVER_OPTS=&quot;$HBASE_REGIONSERVER_OPTS -XX:PermSize=128m -XX:MaxPermSize=128m&quot;
+export HBASE_MANAGES_ZK=false
+
+regionservers
+Slave1
+Slave2
+Slave3
+Slave4
+
+以上三个文件主要配置zookeeper和HDFS相关配置信息
+</code></pre><p>###启动集群<br>1.启动集群<br>进入软件包的bin目录，执行start-hbase.sh便可以启动Hbase集群。</p>
+<p>2.web界面访问<a href="http://master:16010/master-status可以看到集群的状态" target="_blank" rel="noopener">http://master:16010/master-status可以看到集群的状态</a></p>
+<p>3.在HMaster上面有HMaster进程，在HRegion上面有一个HReginServer的进程。<br>4.启动HMaster的backup进程。<br>在其他机器上进入bin目录启动./hbase_daemon.sh start master</p>
+<p>###shell客户端连接<br>进入软件包的bin目录，运行./hbase shell即可进入Hbase的shell client端。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/09/24/stormji-qun-da-jian/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1586,327 +1896,6 @@ virt-install --name=centos1 --ram 512 --vcpus=1 --disk path=/etc/libvirt/centos1
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/09/19/linuxxing-neng-jian-kong/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="ddup">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/uploads/avatar.jpeg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Ddup">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/09/19/linuxxing-neng-jian-kong/" itemprop="url">
-                  Linux性能监控
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-09-19T11:49:53+08:00">
-                2016-09-19
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>##Linux常用的性能监控</p>
-<blockquote>
-<ul>
-<li>基本的性能监控工具</li>
-<li>基本的调试工具</li>
-</ul>
-</blockquote>
-<p>###基本的性能监控工具</p>
-<pre><code>ifstat  网络监控。
-dstat： 查看系统初步的负载情况。
-lsof: 查看打开的文件。
-sar : sar 1 3000   用于看cpu整体的利用率  io的延迟等等
-mpstat   可以查看到每一个cpu内核的运行状态。排查网卡绑定的情况可以使用。
-mpstat -P ALL 1 3000
-</code></pre><p><a href="http://www.ibm.com/developerworks/cn/aix/library/au-lsof.html" target="_blank" rel="noopener">http://www.ibm.com/developerworks/cn/aix/library/au-lsof.html</a></p>
-<p><a href="http://linuxtools-rst.readthedocs.io/zh_CN/latest/tool/iostat.html" target="_blank" rel="noopener">http://linuxtools-rst.readthedocs.io/zh_CN/latest/tool/iostat.html</a></p>
-<p>###基本的调试工具</p>
-<pre><code>进程调试命令:truss、strace和ltrace
-查看系统函数调用的热度图：
-yum install perf
-perf top
-</code></pre><p>###kingson讲课学习<br>    CPI   ：  一个instruction  需要多少个cpu来跑 ， 这个越小越好   最好是0.25一个clock最好的是跑4个instruction   很好的是0.5   一般是1</p>
-<pre><code>1. increase CLK（and COST）
-    increase CPU frequency
-    increase cores
-    increase sockets
-    Hyper-Threading
-2.Reduce CPI
-3.Reduce path length
-    SW(compiler,runtime config, programming)
-    Better compilers
-    Profile guided optimizations
-First thing to do?
-
-branch mispredict ratio  cpu猜测错误的频率0.01    好  0.05差
-</code></pre>
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/09/19/ci-pan-cao-zuo-he-iostatfen-xi/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="ddup">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/uploads/avatar.jpeg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Ddup">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/09/19/ci-pan-cao-zuo-he-iostatfen-xi/" itemprop="url">
-                  磁盘操作和iostat分析
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-09-19T10:49:50+08:00">
-                2016-09-19
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>##磁盘运维<br>    lsblk：<br>        显示服务器上面块设备的相关信息<br>    fdisk：<br>        对容量偏小的磁盘进行相关操作<br>    parted：<br>        对大容量的磁盘进行相关操作<br>        eg： parted /dev/dfc mklabel gpt mkpart 1 ext4 1 6400G<br>        <a href="http://zhangmingqian.blog.51cto.com/1497276/1068779" target="_blank" rel="noopener">http://zhangmingqian.blog.51cto.com/1497276/1068779</a><br>    smartctl:<br>        查看磁盘相关硬件信息<br>    hdparm:<br>        hdparm  和dd差不多，是用来压测磁盘的。可以用来查看硬盘信息。</p>
-<pre><code>lsscsi:
-    查看每个硬盘的型号和厂家  
-
-df -T -h  可以查看文件系统类型
-
-
-partprobe要内核更新分区表（对于磁盘分区之后，调用该命令更新内核分区表）
-
-tune2fs:
-    查看分区的相关信息
-    tune2fs -l /dev/sda5
-
-格式化磁盘：
-    #!/bin/bash -
-    for i in {a..n};
-    do
-        nohup &amp;&gt;/dev/null dd if=/dev/zero of=/dev/sd$i bs=1G count=4000 &amp; 
-    done
-</code></pre><p>##性能监控<br>    iotop<br>        主要用于查看相关进程的磁盘访问情况。</p>
-<pre><code>iostat
-    iostat -xk 1
-</code></pre><p><img src="/uploads/2016/09/iostat.png" alt=""></p>
-<p>无大量压力下，系统的io情况。</p>
-<pre><code>|字段|含义|
-|-------|:------------------- |
-|rrqm/s    |(read request merge)/(读合并数  HDD)主要是合并IO，让落到磁盘上面的请求量更少|
-|wrqm/s |(write request merge)/(写合并数  HDD)|
-|r/s     |read iops|
-|w/s    |write iops|
-|rkB/s    |read带宽|
-|wkB/s    |write带宽|
-|avgrq-sz|平均每次设备I/O操作的数据大小 (扇区)|
-|avgqu-sz|平均I/O队列长度.即 delta(aveq)/s/1000 (因为aveq的单位为毫秒)|
-|await    |平均每次设备I/O操作的等待时间 (毫秒).    |
-|r_await | 平均每次设备I/O读操作的等待时间 (毫秒).|
-|w_await | 平均每次设备I/O写操作的等待时间 (毫秒).|
-|svctm   | 平均每次设备I/O操作的服务时间 (毫秒).即 delta(use)/delta(rio+wio)|
-|util    |一秒中有百分之多少的时间用于 I/O 操作,或者说一秒中有多少时间 I/O 队列是非空的.即 delta(use)/s/1000 (因为use的单位为毫秒)|
-</code></pre><p>一般ssd的await 在190左右</p>
-<p><a href="http://www.ha97.com/4546.html" target="_blank" rel="noopener">http://www.ha97.com/4546.html</a><br><a href="http://www.php-oa.com/2009/02/03/iostat.html" target="_blank" rel="noopener">http://www.php-oa.com/2009/02/03/iostat.html</a></p>
-<p><img src="/uploads/2016/09/dd1024.png" alt=""></p>
-<p>##磁盘和Linux驱动关系<br>目前很多磁盘为了增大空间，会有一个逻辑扇区和物理扇区。</p>
-<p><img src="/uploads/2016/09/sector.png" alt=""></p>
-<p>物理扇区是磁盘物理存储的最小单元，逻辑扇区是为了兼容Linux内核扇区的大小，现在Linux内核默认的扇区大小为512。逻辑扇区是OS访问磁盘的最小单元。iostat出现的avgrq-sz的单位就是逻辑扇区。</p>
-<p>物理扇区和逻辑扇区会产生对齐的问题，在格式化磁盘的时候要注意。</p>
-<p><a href="http://noops.me/?p=747" target="_blank" rel="noopener">http://noops.me/?p=747</a></p>
-<p>##Inode和文件存储<br>    文件存储在硬盘上，硬盘的最小操作单元是扇区，每个扇区是512字节.<br>    操作系统操作磁盘的时候不会直接去操作扇区，这样效率很低。操作系统一般是操作block，每个block是4K.<br>    分区上的文件系统相关信息可以通过：tune2fs -l /dev/sda1 或者 dumpe2fs -h /dev/sda1来查看。<br>    文件的数据都存储在”块”中，相关的文件原信息存储在inode中。<br>    inode一般存储的是文件的名称、修改时间、权限、创建者、文件大小等等。</p>
-<pre><code>文件的inode信息可以通过stat XXX查看到。
-inode的大小会消耗磁盘空间，所以磁盘格式化的时候，操作系统会自动将硬盘分为两个区域，一个是数据区，存放真实的数据；一个是inode区，存放inode 相关的信息。（df -i）
-</code></pre><p><img src="/uploads/2016/09/io-----.png" alt=""><br>io细致图<br><img src="/uploads/2016/09/io--.png" alt=""><br>整体的逻辑架构图<br><img src="/uploads/2016/09/--IO--.png" alt=""><br>IO经典架构图</p>
-<p><a href="http://way4ever.com/?p=359" target="_blank" rel="noopener">http://way4ever.com/?p=359</a></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1956,7 +1945,7 @@ inode的大小会消耗磁盘空间，所以磁盘格式化的时候，操作系
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">33</span>
+                <span class="site-state-item-count">35</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -1967,7 +1956,7 @@ inode的大小会消耗磁盘空间，所以磁盘格式化的时候，操作系
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">12</span>
+                <span class="site-state-item-count">14</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

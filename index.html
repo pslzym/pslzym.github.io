@@ -280,6 +280,252 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/05/07/linux内核收发报文流程/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ddup">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/uploads/avatar.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ddup">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/05/07/linux内核收发报文流程/" itemprop="url">
+                  linux内核收发报文流程
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-05-07T13:40:09+08:00">
+                2018-05-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="linux收发报文"><a href="#linux收发报文" class="headerlink" title="linux收发报文"></a>linux收发报文</h2><p>在此记录下linux内核收发报文的基本流程，以免时间长了之后自己忘记。</p>
+<h3 id="linux收报文"><a href="#linux收报文" class="headerlink" title="linux收报文"></a>linux收报文</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">1. 物理网卡收到报文之后，会根据相关的hash算法和设置相关queue,最后把报文放入相关的queue中。</span><br><span class="line">ethtool  -S p3p1 //查看相关queue的信息</span><br><span class="line">ethtool  -N p2p2 rx-flow-hash udp4 sdfn //修改相关的hash算法</span><br><span class="line">ethtool -A ethX tx off rx off autoneg off // 关闭相关的网卡协商功能</span><br><span class="line">ethtool -L p2p2 combined 12 //修改相关的queue数量</span><br><span class="line">2. 相关的网卡会产生物理中断，把相关的报文信息告诉cpu。</span><br><span class="line">设置queue对应的中断号：/proc/irq/$i/smp_affinity_list</span><br><span class="line">查看中断的信息：cat /proc/interrupts</span><br><span class="line">3.cpu进入硬中断，做一些基本的处理后，设置软中断，退出硬中断。</span><br><span class="line">4.cpu进入软中断，做相关的处理，主要设置skb相关的结构体。</span><br><span class="line">sar -n DEV 1 </span><br><span class="line">mpstat -P ALL 1</span><br><span class="line">5.在软中断设置完skb数据之后，cpu继续处理相关的报文，把相关的报文向上层的协议层交付。</span><br><span class="line">6.交付到ip层之后会查相关的策略路由，决定报文是本地接收还是转发。</span><br><span class="line">7.如果是本地接收的话，继续向上交付报文。</span><br></pre></td></tr></table></figure>
+<h3 id="linux发报文"><a href="#linux发报文" class="headerlink" title="linux发报文"></a>linux发报文</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">1.在收报文的时候，报文到达ip层，如果发现是需要转发的报文，找到相关的转发口，把报文向下层协议层交付。</span><br><span class="line">2.之后流量经过流量控制层（tc），到达地层的驱动层。</span><br><span class="line">3.最后驱动将skb放入自己的发送队列，通知网卡发送数据包。</span><br><span class="line">4.网卡发送完成之后，发送中断给cpu。cpu收到中断后进行skb的相关清理工作。</span><br></pre></td></tr></table></figure>
+<h3 id="相关各个层面排查问题方法"><a href="#相关各个层面排查问题方法" class="headerlink" title="相关各个层面排查问题方法"></a>相关各个层面排查问题方法</h3><p>参考：<a href="https://zhaozhanxu.com/2016/07/12/Linux/2016-07-12-Linux-Kernel-Pkts_Processing1/" target="_blank" rel="noopener">https://zhaozhanxu.com/2016/07/12/Linux/2016-07-12-Linux-Kernel-Pkts_Processing1/</a><br><a href="https://segmentfault.com/a/1190000008836467" target="_blank" rel="noopener">https://segmentfault.com/a/1190000008836467</a><br><a href="https://segmentfault.com/a/1190000008926093" target="_blank" rel="noopener">https://segmentfault.com/a/1190000008926093</a></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/05/06/flannel网络学习/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ddup">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/uploads/avatar.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ddup">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/05/06/flannel网络学习/" itemprop="url">
+                  flannel网络学习
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-05-06T14:52:46+08:00">
+                2018-05-06
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="flannel-udp类型网络学习"><a href="#flannel-udp类型网络学习" class="headerlink" title="flannel  udp类型网络学习"></a>flannel  udp类型网络学习</h2><p>在flannel搭建的基础网络中，需要配置一个全局所有docker所在的大网段。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/atomic.io/network/config &#123;&quot;Network&quot; : &quot;10.0.0.0/16&quot;&#125;</span><br></pre></td></tr></table></figure></p>
+<p>在此之后，每一台注册到etcd里面的机器都会分配一个相关的子网，用于本机的docker使用。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">#etcdctl ls -r</span><br><span class="line">/atomic.io</span><br><span class="line">/atomic.io/network</span><br><span class="line">/atomic.io/network/subnets</span><br><span class="line">/atomic.io/network/subnets/10.0.94.0-24</span><br><span class="line">/atomic.io/network/subnets/10.0.69.0-24</span><br><span class="line">/atomic.io/network/subnets/10.0.28.0-24</span><br><span class="line">/atomic.io/network/config</span><br><span class="line">可以看到，三台机器分别分配了：</span><br><span class="line">10.0.94.0／24</span><br><span class="line">10.0.69.0／24</span><br><span class="line">10.0.28.0／24</span><br><span class="line">对应的设备上面的ip在相关etcd的value里面存着。</span><br></pre></td></tr></table></figure></p>
+<p>flannel会生成docker启动的配置文件，最后docker起来之后，设备的相关网络设备如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">5: docker0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1472 qdisc noqueue state UP</span><br><span class="line">    link/ether 02:42:50:f6:f8:5d brd ff:ff:ff:ff:ff:ff</span><br><span class="line">    inet 10.0.28.1/24 scope global docker0</span><br><span class="line">       valid_lft forever preferred_lft forever</span><br><span class="line">9: flannel0: &lt;POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP&gt; mtu 1472 qdisc pfifo_fast state UNKNOWN qlen 500</span><br><span class="line">    link/none</span><br><span class="line">    inet 10.0.28.0/16 scope global flannel0</span><br><span class="line">       valid_lft forever preferred_lft forever</span><br></pre></td></tr></table></figure></p>
+<h3 id="端到端流量分析"><a href="#端到端流量分析" class="headerlink" title="端到端流量分析"></a>端到端流量分析</h3><p>A端 —&gt; docker0 —&gt; 本地路由 —&gt; flannel0 —&gt; flannel0 头部封装一层udp —&gt; 经过本地路由，发往目的设备 —&gt; flanneld程序监听的udp socket收到相关的报文 —&gt; flanneld程序去掉外层的udp报文,经过本地路由 —&gt; 经过本地路由之后被docker0收到 —&gt; 发往Z端的docker</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">1.A端 ---&gt; docker0</span><br><span class="line">2.docker0 ---&gt; 本地路由</span><br><span class="line">3.本地路由 ---&gt; flannel0  //由于flannel0 的ip地址为大掩码，且在本地加了一条路由，10.0.0.0/16 dev flannel0  scope link，整个网络的数据包都会被flannel0收上来。</span><br><span class="line">4.flannel0 ---&gt; flannel0 头部封装一层udp ---&gt; 经过本地路由，发往目的设备。</span><br><span class="line">//此过程有一个封装udp报文的过程，flanneld把相关的网段和nexthop的路由信息缓存到内存里面了，在封装ip层的时候，根据etcd里面的信息来寻找相关的目的ip。</span><br><span class="line">// 在flannel0上面抓包的时候，只能抓到10.0.28.0的报文，是因为docker做了nat的原因。</span><br><span class="line"></span><br><span class="line">发往对端的相关的行为和本端收差不多。</span><br></pre></td></tr></table></figure>
+<h2 id="flannel-vxlan类型网络学习"><a href="#flannel-vxlan类型网络学习" class="headerlink" title="flannel vxlan类型网络学习"></a>flannel vxlan类型网络学习</h2><h3 id="flannel-配置"><a href="#flannel-配置" class="headerlink" title="flannel 配置"></a>flannel 配置</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">修改etcd里面存储的相关的配置，/atomic.io/network/config</span><br><span class="line">&#123;&quot;Network&quot; : &quot;10.0.0.0/16&quot;, &quot;Backend&quot;: &#123;&quot;Type&quot;: &quot;vxlan&quot;&#125;&#125; </span><br><span class="line">相关的backend 修改为vxlan.</span><br><span class="line">启动之后，机器的相关网络配置为：</span><br><span class="line">5: docker0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1450 qdisc noqueue state UP</span><br><span class="line">    link/ether 02:42:50:f6:f8:5d brd ff:ff:ff:ff:ff:ff</span><br><span class="line">    inet 10.0.2.1/24 scope global docker0</span><br><span class="line">       valid_lft forever preferred_lft forever</span><br><span class="line">14: flannel.1: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1450 qdisc noqueue state UNKNOWN</span><br><span class="line">    link/ether ba:f6:1c:11:aa:67 brd ff:ff:ff:ff:ff:ff</span><br><span class="line">    inet 10.0.2.0/32 scope global flannel.1</span><br><span class="line">       valid_lft forever preferred_lft forever</span><br><span class="line">       </span><br><span class="line">default via 172.16.1.199 dev eth1</span><br><span class="line">10.0.0.0/16 dev flannel.1        // flanneld程序下发的，为了使相关的流量进入相关的vxlan口。</span><br><span class="line">10.0.2.0/24 dev docker0  proto kernel  scope link  src 10.0.2.1</span><br><span class="line">169.254.0.0/16 dev eth0  scope link  metric 1002</span><br><span class="line">172.16.1.0/24 dev eth1  proto kernel  scope link  src 172.16.1.17</span><br><span class="line">192.168.121.0/24 dev eth0  proto kernel  scope link  src 192.168.121.135</span><br><span class="line"></span><br><span class="line">etcd相关的配置：</span><br><span class="line">/atomic.io</span><br><span class="line">/atomic.io/network</span><br><span class="line">/atomic.io/network/subnets</span><br><span class="line">/atomic.io/network/subnets/10.0.2.0-24</span><br><span class="line">/atomic.io/network/subnets/10.0.60.0-24</span><br><span class="line">/atomic.io/network/subnets/10.0.61.0-24</span><br><span class="line">/atomic.io/network/config</span><br><span class="line"></span><br><span class="line">#etcdctl get /atomic.io/network/subnets/10.0.2.0-24</span><br><span class="line">&#123;&quot;PublicIP&quot;:&quot;172.16.1.17&quot;,&quot;BackendType&quot;:&quot;vxlan&quot;,&quot;BackendData&quot;:&#123;&quot;VtepMAC&quot;:&quot;ba:f6:1c:11:aa:67&quot;&#125;&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">#bridge fdb show dev flannel.1</span><br><span class="line">5e:81:06:54:fd:d6 dst 172.16.1.15 self permanent</span><br><span class="line">02:80:f3:49:55:1c dst 172.16.1.16 self permanent</span><br><span class="line">fdb里面存储的mac对应ip，是flanneld通过读取etcd里面的信息写入的。</span><br></pre></td></tr></table></figure>
+<h3 id="端到端流量分析-1"><a href="#端到端流量分析-1" class="headerlink" title="端到端流量分析"></a>端到端流量分析</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">1.流量从A端的docker流出，经过docker0之后，由于存在10.0.0.0/16 dev flannel.1存在，相关的流量被收入flanne1.1收入。</span><br><span class="line">2.流入到flannel.1收入三层的报文，转发出去的时候发生l3miss,找不到目的地址的mac。</span><br><span class="line">#ip nei</span><br><span class="line">10.0.2.2 dev docker0 lladdr 02:42:0a:00:02:02 STALE</span><br><span class="line">10.0.61.0 dev flannel.1 lladdr 5e:81:06:54:fd:d6 STALE</span><br><span class="line">192.168.121.1 dev eth0 lladdr 52:54:00:bf:1b:c6 STALE</span><br><span class="line">10.0.2.3 dev docker0 lladdr 02:42:0a:00:02:03 STALE</span><br><span class="line">172.16.1.199 dev eth1 lladdr 34:b3:54:e7:88:92 REACHABLE</span><br><span class="line">10.0.61.2 dev flannel.1 lladdr 5e:81:06:54:fd:d6 STALE //此时的mac是对端的flannel.1的Mac地址。</span><br><span class="line">10.0.61.3 dev flannel.1  FAILED</span><br><span class="line">172.16.5.15 dev eth1 lladdr 52:54:00:57:c0:cc STALE</span><br><span class="line">172.16.1.15 dev eth1 lladdr 52:54:00:f2:e5:1c STALE</span><br><span class="line">172.16.1.16 dev eth1 lladdr 52:54:00:a1:60:4f REACHABLE</span><br><span class="line">3.上述的mac地址是flannel的程序下发的。</span><br><span class="line">4.之后flannel.1会封装vxlan报文头。查询fdb表。</span><br><span class="line">#bridge fdb show dev flannel.1</span><br><span class="line">5e:81:06:54:fd:d6 dst 172.16.1.15 self permanent</span><br><span class="line">02:80:f3:49:55:1c dst 172.16.1.16 self permanent</span><br><span class="line">5.之后走内核的协议栈。</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">l2miss：如果设备找不到 MAC 地址需要的 vtep 地址，就发送通知事件</span><br><span class="line">l3miss：如果设备找不到需要 IP 对应的 MAC 地址，就发送通知事件</span><br></pre></td></tr></table></figure>
+<p>vxlan 参考链接：<a href="http://cizixs.com/2017/09/28/linux-vxlan" target="_blank" rel="noopener">http://cizixs.com/2017/09/28/linux-vxlan</a></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/04/27/golang学习/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1421,284 +1667,6 @@ ReducerAggregator&lt;T&gt;
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/10/08/stormshi-wu-pi-chu-li-yuan-li/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="ddup">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/uploads/avatar.jpeg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Ddup">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/10/08/stormshi-wu-pi-chu-li-yuan-li/" itemprop="url">
-                  Storm事务-批处理原理
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-10-08T13:54:36+08:00">
-                2016-10-08
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>##Storm事务-批处理原理</p>
-<ol>
-<li><p>事务<br>对于容错机制，Storm通过一个系统级别的组件acker，判断tuple是否发送成功，进而spout可以重发该tuple，保证一个tuple在出错的情况下至少被重发一次。<br>但是在需要精确统计tuple的场景下（销售金额），希望每个tuple“被且仅被处理一次”。storm引入了Transactional Topology。它可以保证每一个“tuple”被且仅被处理一次，这样就可以实现一种非常准确，且高度容错方式来实现计数类应用。</p>
-</li>
-<li><p>批处理<br>逐个处理单个tuple，增加很多开销，如写库、输出结果频率过高。事务处理单个tuple效率比较低，因此storm中引入batch处理。<br>批处理是一次性处理一批（batch）tuple，事务可以确保该批次要么全部处理成功，如果有处理失败的则全部不计，Storm会对失败的批次重新发送，且确保每一个batch被且仅被处理一次。</p>
-</li>
-</ol>
-<p>###事务机制和原理<br>对于只处理一次的需要，从原理上来讲，需要在发送tuple的时候带上，txid，在需要事务处理的时候，根据该txid是否以前已经处理成功来决定是否进行处理，当然需要把txid和处理结果一起做保存。<br>在事务batch处理中，一批tuple赋予一个txid，为了提高batch之间处理的并行度，storm采用了pipeline处理模型，这样多个事务可以并行执行，但是commit的是严格按照顺序的。</p>
-<p>Storm事务处理中，把一个batch的计算分成两个阶段processing和commit阶段：<br>processing阶段：多个batch可以并行计算。<br>commit阶段：batch之间强制按照顺序进行提交。<br><img src="/uploads/2016/10/--1.png" alt=""></p>
-<p>####事务Topologies<br>使用Transactional Topologies的时候，storm为你做下面这些事情。</p>
-<ul>
-<li>管理状态：Storm把所有实现Transactional Topologies所必须的状态保存在zookeeper里面，包括当前transaction id 以及定义每一个batch的一些元数据。</li>
-<li>协调事务：Storm帮你管理所有事情，如帮你决定在任何一个时间点是该processing还是该committing.</li>
-<li>错误检测: Storm利用acking框架来高效地检测什么时候一个batch被成功处理了，被成功提交了，或者失败了。Storm然后会相应地replay对应的batch。你不需要自己手    动做任何acking或者anchoring (emit时发生的动作)。</li>
-<li>内置的批处理API: Storm在普通bolt之上包装了一层API来提供对tuple的批处理支持。Storm管理所有的协调工作，包括决定什么时候一个bolt接收到一个特定transaction的所有tuple。Storm同时也会自动清理每个transaction所产生的中间数据。</li>
-</ul>
-<p>事务性的spout需要实现ITransactionalSpout，这个接口包含两个内部接口类Coordinator和Emitter。在topology运行的时候，事务性的spout内部包含一个子Topology，结构图如下：</p>
-<p><img src="/uploads/2016/10/--2.png" alt=""></p>
-<p>这里面有两种类型的tuple，一种是事务性的tuple，一种是batch中的tuple；<br>coordinator 开启一个事务准备发射一个batch时候，进入一个事务的processing阶段，会发射一个事务性 tuple(transactionAttempt &amp; metadata)到”batch emit”流</p>
-<p>Emitter以all grouping(广播)的方式订阅coordinator的”batch emit”流，负责为每个batch实际发射tuple。发送的tuple都必须以TransactionAttempt作为第一个field，storm根据这个field来判断tuple属于哪一个batch。</p>
-<p>coordinator只有一个，emitter根据并行度可以有多个实例</p>
-<p>coordinator只有一个，emitter根据并行度可以有多个实例</p>
-<p>####TransactionAttempt 和 元数据</p>
-<p>TransactionAttempt包含两个值：一个transaction id，一个attempt id。transaction id的作用就是我们上面介绍的对于每个batch中的tuple是唯一的，而且不管这个batch    replay多少次都是一样的。<br>attempt id是对于每个batch唯一的一个id， 但是对于同一个batch，它replay之后的attempt id跟replay之前就不一样了，<br>我们可以把attempt id理解成replay-times， storm利用这个id来区别一个batch发射的tuple的不同版本</p>
-<p>metadata(元数据)中包含当前事务可以从哪个point进行重放数据，存放在zookeeper中的，spout可以通过Kryo从zookeeper中序列化和反序列化该元数据。</p>
-<p><img src="/uploads/2016/10/--3.png" alt=""><br>内部处理流程</p>
-<p>####事务性Bolt</p>
-<ul>
-<li>BaseTransactionalBolt处理batch在一起的tuples，对于每一个tuple调用调用execute方 法，而在整个batch处理(processing)完成的时候调用finishBatch方法。如果BatchBolt被标记成Committer，则 只能在commit阶段调用finishBatch方法。一个batch的commit阶段由storm保证只在前一个batch成功提交之后才会执行。并且它会重试直到topology里面的所有bolt在commit完成提交。那么如何知道batch的processing完成了，也就是bolt是否接收处理了batch里面所有的tuple；在bolt内部，有一个 CoordinatedBolt的模型。<br>CoordinateBolt具体原理如下：</li>
-</ul>
-<p><img src="/uploads/2016/10/--4.png" alt=""></p>
-<p>每个CoordinateBolt记录两个值：有哪些task给我发送了tuple（根据topology的grouping信息）；我要给哪些task发送信息（同样根据groping信息）。</p>
-<p>等所有的tuple都发送完了之后，CoordinateBolt通过另外一个特殊的stream以emitDirect的方式告诉所有它发送过 tuple的task，它发送了多少tuple给这个task。下游task会将这个数字和自己已经接收到的tuple数量做对比，如果相等，则说明处理 完了所有的tuple。</p>
-<p>下游CoordinateBolt会重复上面的步骤，通知其下游。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/10/07/stormke-kao-xing-chu-li/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="ddup">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/uploads/avatar.jpeg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Ddup">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/10/07/stormke-kao-xing-chu-li/" itemprop="url">
-                  Storm可靠性处理
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-10-07T00:56:31+08:00">
-                2016-10-07
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>##Storm可靠性处理</p>
-<ul>
-<li>spout可靠性处理</li>
-<li>bolt可靠性处理</li>
-</ul>
-<p>###spout可靠性处理<br>以单词计算的例子为例子：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line">package org.pslland;</span><br><span class="line"></span><br><span class="line">import org.apache.storm.spout.SpoutOutputCollector;</span><br><span class="line">import org.apache.storm.task.TopologyContext;</span><br><span class="line">import org.apache.storm.topology.IRichBolt;</span><br><span class="line">import org.apache.storm.topology.IRichSpout;</span><br><span class="line">import org.apache.storm.topology.OutputFieldsDeclarer;</span><br><span class="line">import org.apache.storm.topology.base.BaseRichSpout;</span><br><span class="line">import org.apache.storm.tuple.Fields;</span><br><span class="line">import org.apache.storm.tuple.Values;</span><br><span class="line">import org.apache.storm.utils.Utils;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">import java.util.Map;</span><br><span class="line">import java.util.UUID;</span><br><span class="line">import java.util.concurrent.ConcurrentHashMap;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by psl on 10/5/16.</span><br><span class="line"> */</span><br><span class="line">public class SentenceSpout extends BaseRichSpout &#123;</span><br><span class="line"></span><br><span class="line">    private SpoutOutputCollector spoutOutputCollector = null;</span><br><span class="line">    private ConcurrentHashMap&lt;UUID, Values&gt; pending;</span><br><span class="line"></span><br><span class="line">    private String [] sentence = &#123;</span><br><span class="line">        &quot;my dog has fleas&quot;,</span><br><span class="line">            &quot;I like cold beverages&quot;,</span><br><span class="line">            &quot;the dog ate my homework&quot;,</span><br><span class="line">            &quot;don&apos;t have a cow man&quot;,</span><br><span class="line">            &quot;i don&apos;t think i like fleas&quot;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    private  int index = 0;</span><br><span class="line"></span><br><span class="line">    public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) &#123;</span><br><span class="line">        outputFieldsDeclarer.declare(new Fields(&quot;sentence&quot;));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector spoutOutputCollector) &#123;</span><br><span class="line">        this.spoutOutputCollector = spoutOutputCollector;</span><br><span class="line">        this.pending = new ConcurrentHashMap&lt;UUID, Values&gt;();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void nextTuple() &#123;</span><br><span class="line">        UUID msgId = UUID.randomUUID();</span><br><span class="line">        ///发送时必须带上msgId</span><br><span class="line">        this.spoutOutputCollector.emit(new Values(sentence[index]), msgId);</span><br><span class="line"></span><br><span class="line">        this.pending.put(msgId, new Values(sentence[index]));</span><br><span class="line"></span><br><span class="line">        index++;</span><br><span class="line">        if(index &gt;= sentence.length)&#123;</span><br><span class="line">            index = 0;</span><br><span class="line">        &#125;</span><br><span class="line">        Utils.sleep(1000);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void ack(Object msgId) &#123;</span><br><span class="line">        System.err.println(&quot;spout ack&quot;);</span><br><span class="line">        this.pending.remove(msgId);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void fail(Object msgId) &#123;</span><br><span class="line">        this.spoutOutputCollector.emit(this.pending.get(msgId), msgId);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>###bolt可靠性处理</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">package org.pslland;</span><br><span class="line"></span><br><span class="line">import org.apache.storm.task.OutputCollector;</span><br><span class="line">import org.apache.storm.task.TopologyContext;</span><br><span class="line">import org.apache.storm.topology.OutputFieldsDeclarer;</span><br><span class="line">import org.apache.storm.topology.base.BaseRichBolt;</span><br><span class="line">import org.apache.storm.tuple.Fields;</span><br><span class="line">import org.apache.storm.tuple.Tuple;</span><br><span class="line">import org.apache.storm.tuple.Values;</span><br><span class="line"></span><br><span class="line">import java.util.Map;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by psl on 10/5/16.</span><br><span class="line"> */</span><br><span class="line">public class SplitSentenceBolt extends BaseRichBolt &#123;</span><br><span class="line"></span><br><span class="line">    private OutputCollector outputCollector = null;</span><br><span class="line"></span><br><span class="line">    public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) &#123;</span><br><span class="line">        this.outputCollector = outputCollector;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void execute(Tuple tuple) &#123;</span><br><span class="line">        String sentence = tuple.getStringByField(&quot;sentence&quot;);</span><br><span class="line">        String [] words = sentence.split(&quot; &quot;);</span><br><span class="line"></span><br><span class="line">        System.out.println(&quot;splitSentence : &quot; + sentence);</span><br><span class="line"></span><br><span class="line">        for (String word : words)&#123;</span><br><span class="line">            //发送时必须带上 tuple</span><br><span class="line">            this.outputCollector.emit(tuple, new Values(word));</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        this.outputCollector.ack(tuple);</span><br><span class="line">        System.err.println(&quot;split ack&quot;);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) &#123;</span><br><span class="line">        outputFieldsDeclarer.declare(new Fields(&quot;word&quot;));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>后面接着的bolt必须全部都加上tuple向后发送，并且处理完成后，显示的调用ack方法。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1748,7 +1716,7 @@ ReducerAggregator&lt;T&gt;
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">33</span>
+                <span class="site-state-item-count">35</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -1759,7 +1727,7 @@ ReducerAggregator&lt;T&gt;
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">12</span>
+                <span class="site-state-item-count">14</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
